@@ -51,6 +51,8 @@ var (
 		"lastName":  generateLastName,
 		"paragraph": generateParagraph,
 		"ipv4":      generateIPv4,
+                "phonenumber": generatePhoneNumber,
+                "character": generateCharacter,
 	}
 )
 
