@@ -1,27 +1,49 @@
 {
-  "patterns": [
-    {
-      "tableName": "phone_book",
-      "fields": [
-        {
-          "field": "first_name",
-          "position": 3,
-          "type": "ipv4",
-          "constraints": null
-        },
-        {
-          "field": "last_name",
-          "position": 4,
-          "type": "ipv4",
-          "constraints": null
-        },
-        {
-          "field": "company_name",
-          "position": 5,
-          "type": "character",
-          "constraints": null
-        }
-      ]
-    }
-  ]
-}
+    "patterns": [
+      {
+        "tableName": "users",
+        "fields": [
+          {
+            "field": "name",
+            "position": 2,
+            "type": "username",
+            "constraints": null
+          },
+          {
+            "field": "mobile_number",
+            "position": 5,
+            "type": "phonenumber",
+            "constraints": null
+          },
+          {
+            "field": "email",
+            "position": 4,
+            "type": "character",
+            "constraints": null
+          }
+        ]
+      },
+      {
+        "tableName": "oauth_clients",
+        "fields": [
+          {
+            "field": "secret",
+            "position": 4,
+            "type": "character",
+            "constraints": "null"
+          }
+        ]
+      },
+      {
+        "tableName": "user_login",
+        "fields": [
+          {
+            "field": "ip_address",
+            "position": 3,
+            "type": "ipv4",
+            "constraints": "null"
+          }
+        ]
+      }
+    ]
+  }
