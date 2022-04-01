@@ -16,4 +16,4 @@ RUN go get -d -v . \
     && chmod +x entrypoint.sh
 
 #RUN chmod +x /bin/anonymize-mysqldump
-#ENTRYPOINT ./entrypoint.sh
+ENTRYPOINT ./entrypoint.sh

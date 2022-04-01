@@ -1,4 +1,6 @@
 #!/bin/bash
+echo "$s3"
+echo "$FILE_NAME"
 SUFFIX=".gz"
 FILE_NAME_REMOVE_SUFFIX=${FILE_NAME/%$SUFFIX}
 DATE=$(date +"%F-%H")
