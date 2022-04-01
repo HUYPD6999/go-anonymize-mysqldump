@@ -12,6 +12,8 @@ COPY ./ .
 RUN go get -d -v . \
     && go build \
     && mv go-anonymize-mysqldump /bin/anonymize-mysqldump \
-    && chmod +x /bin/anonymize-mysqldump
+    && chmod +x /bin/anonymize-mysqldump \
+    && chmod +x entrypoint.sh
 
 #RUN chmod +x /bin/anonymize-mysqldump
+#ENTRYPOINT ./entrypoint.sh

@@ -1,0 +1,27 @@
+{
+  "patterns": [
+    {
+      "tableName": "phone_book",
+      "fields": [
+        {
+          "field": "first_name",
+          "position": 3,
+          "type": "ipv4",
+          "constraints": null
+        },
+        {
+          "field": "last_name",
+          "position": 4,
+          "type": "ipv4",
+          "constraints": null
+        },
+        {
+          "field": "company_name",
+          "position": 5,
+          "type": "character",
+          "constraints": null
+        }
+      ]
+    }
+  ]
+}
