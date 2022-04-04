@@ -26,10 +26,10 @@ Parameters:
     Type: String
     Default: mysql-maskdb-jobqueue
     Description: "AWS Batch Job Queue Name"
-  # JobImage:
-  #   Type: String
-  #   Default: 426041546839.dkr.ecr.eu-west-1.amazonaws.com/masked-db-huypd6:latest
-  #   Description: "Image use for AWS Batch"
+  S3Target:
+    Type: String
+    Default: mysql-maskdb-bucket
+    Description: "s3 bucket store masked mysql dump"    
   LambdaFunctionName:
     Type: String
     Default: mysql-maskdb-function
@@ -38,6 +38,11 @@ Parameters:
     Description: "Enter the ID of VPC"
     Type: AWS::EC2::VPC::Id
 Resources:
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Ref S3Target
   ExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -231,7 +236,8 @@ Resources:
           JOB_DEFINITION: !Ref JobDefinitionName
           JOB_NAME: mysql-mask-db
           JOB_QUEUE: !Ref JobQueueName
+          S3_BUCKET_TARGET: !Ref S3Bucket
 Outputs:
   ECRRepoURI:
     Description: ECR Repo URI
-    Value: !GetAtt EcrRepository.RepositoryUri                                                      
+    Value: !GetAtt EcrRepository.RepositoryUri
