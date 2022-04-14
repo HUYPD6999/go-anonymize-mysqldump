@@ -214,7 +214,7 @@ Resources:
                               },
                               {
                                   'name': 'S3_BUCKET_TARGET',
-                                  'value': "demo-mysqlmasked"
+                                  'value': os.environ['S3_BUCKET_TARGET']
                               }                    
                           ]
                       }            
