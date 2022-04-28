@@ -32,7 +32,7 @@ Parameters:
     Description: "s3 bucket store masked mysql dump"    
   LambdaFunctionName:
     Type: String
-    Default: mysql-maskdb-function
+    Default: mysql-dump-maskdb-function
     Description: "Lambda Name"                   
   VPCID:
     Description: "Enter the ID of VPC"
@@ -179,8 +179,7 @@ Resources:
     Properties:
       FunctionName: !Ref LambdaFunctionName
       Description: Lambda function call AWS Batch
-      Handler: index.lambda_handler
-      Runtime: python3.7
+      Runtime: python3.9
       Code:
         ZipFile: |
           import json
@@ -194,6 +193,7 @@ Resources:
           batch = boto3.client('batch')
 
           def lambda_handler(event, context):
+              print(json.dumps(event))
               bucket = event['Records'][0]['s3']['bucket']['name']
               key = event['Records'][0]['s3']['object']['key']
 
