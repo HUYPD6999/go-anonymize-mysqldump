@@ -4,7 +4,11 @@ Parameters:
   ECRBatchRepoName:
     Type: String
     Default: mysql-masked-db-repo
-    Description: "ECR Repo Store Batch Image"
+    Description: "ECR Repo Store Batch Image For Masked DB Job"
+  ECRBatchRepoNameForMySQLDumps:
+    Type: String
+    Default: mysql-dumps-db-repo
+    Description: "ECR Repo Store Batch Image For MySQL Dumps Job"    
   PrivateSubnet1:
     Description: "Enter the ID of the first subnet"
     Type: AWS::EC2::Subnet::Id
@@ -22,6 +26,10 @@ Parameters:
     Type: String
     Default: mysql-maskdb-job-definition
     Description: "AWS Batch Job Definition Name"
+  JobDefinitionName2:
+    Type: String
+    Default: mysql-dumps-job-definition
+    Description: "AWS Batch Job Definition Name for mysqldumps job"    
   JobQueueName:
     Type: String
     Default: mysql-maskdb-jobqueue
@@ -59,6 +67,7 @@ Resources:
         - 'arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess'
         - 'arn:aws:iam::aws:policy/CloudWatchFullAccess'
         - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/SecretsManagerReadWrite'
   EcrRepository:
     Type: AWS::ECR::Repository
     Properties:
@@ -90,6 +99,37 @@ Resources:
               }
             ]
           }
+  EcrRepository2:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Ref ECRBatchRepoNameForMySQLDumps
+      RepositoryPolicyText:
+        Version: 2012-10-17
+        Statement:
+          - Sid: ecr-repo-statement
+            Effect: Allow
+            Principal:
+              AWS: !Ref 'AWS::AccountId'
+            Action:
+              - 'ecr:*'
+      LifecyclePolicy:
+        LifecyclePolicyText: !Sub |
+          {
+            "rules": [
+              {
+                "rulePriority": 10,
+                "description": "Policy for any images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": {
+                  "type": "expire" 
+                }
+              }
+            ]
+          }          
   ContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -155,7 +195,72 @@ Resources:
         FargatePlatformConfiguration:
           PlatformVersion: LATEST
       RetryStrategy: 
-        Attempts: 1 
+        Attempts: 1
+  RDSUsername:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: RDSUsername
+      Description: This secret store rds username
+      SecretString: "YOUR_RDS_Username"
+  RDSPassword:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: RDSPassword
+      Description: This secret store rds password
+      SecretString: "YOUR_RDS_Password"
+  RDSHostname:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: RDSHostname
+      Description: This secret store rds hostname
+      SecretString: "YOUR_RDS_Hostname"
+  RDSDatabase:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: RDSDatabase
+      Description: This secret store rds database name
+      SecretString: "YOUR_RDSDatabase_Name"
+  S3BucketAreStoringMySQLDumps:
+    Type: 'AWS::SecretsManager::Secret'
+    Properties:
+      Name: S3BucketAreStoringMySQLDumps
+      Description: This secret store the name of S3 bucket are storing mysql dumps files
+      SecretString: "YOUR_S3_Bucket_Are_Storing_MySQLDumps"                      
+  Job2:
+    Type: "AWS::Batch::JobDefinition"
+    Properties:
+      Type: "container"
+      JobDefinitionName: !Ref JobDefinitionName2
+      Timeout: 
+        AttemptDurationSeconds: 1200
+      PlatformCapabilities:
+        - FARGATE
+      ContainerProperties: 
+        ResourceRequirements:
+          - Type: VCPU
+            Value: 1
+          - Type: MEMORY
+            Value: 2048         
+        Image: !GetAtt EcrRepository2.RepositoryUri
+        Secrets:
+          - Name: username
+            ValueFrom: !Ref RDSUsername
+          - Name: password
+            ValueFrom: !Ref RDSPassword
+          - Name: database
+            ValueFrom: !Ref RDSDatabase
+          - Name: hostname
+            ValueFrom: !Ref RDSHostname
+          - Name: S3_BUCKET_TARGET
+            ValueFrom: !Ref S3BucketAreStoringMySQLDumps                                                        
+        NetworkConfiguration:
+          AssignPublicIp: ENABLED
+        ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+        JobRoleArn: !GetAtt ExecutionRole.Arn
+        FargatePlatformConfiguration:
+          PlatformVersion: LATEST
+      RetryStrategy: 
+        Attempts: 1         
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -186,17 +291,13 @@ Resources:
           import urllib.parse
           import boto3
           import os
-
           print('Loading function')
-
           s3 = boto3.client('s3')
           batch = boto3.client('batch')
-
           def lambda_handler(event, context):
               print(json.dumps(event))
               bucket = event['Records'][0]['s3']['bucket']['name']
               key = event['Records'][0]['s3']['object']['key']
-
               try:
                   response = batch.submit_job(
                       jobDefinition = os.environ['JOB_DEFINITION'],
@@ -224,7 +325,7 @@ Resources:
                   print(e)
                   print('Error')
                   raise e
-      Handler: lambda_function.lambda_handler
+      Handler: index.lambda_handler
       MemorySize: 128
       Timeout: 15
       Role:
